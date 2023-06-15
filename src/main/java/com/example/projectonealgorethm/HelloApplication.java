@@ -590,68 +590,82 @@ public class HelloApplication extends Application {
 
         });
 
-
-
         Button find = new Button("find");
         find.setLayoutX(177);
         find.setLayoutY(540);
 
         find.setOnAction(e->{
-            Expected.setText("");
-            diffrent.setText("");
-            all.setText("");
-            memo2.clear();
-            minCostMatrix = new int[numCities][numCities]; // Move initialization here
-            prevCityMatrix = new int[numCities][numCities]; // Move initialization here
-            dpMemo = new List[numCities][numCities];
-            totalCost = 0;
-             start = comboBox.getValue();
-             end = comboBox2.getValue();
+            try {
+                Expected.setText("");
+                diffrent.setText("");
+                all.setText("");
+                memo2.clear();
+                minCostMatrix = new int[numCities][numCities]; // Move initialization here
+                prevCityMatrix = new int[numCities][numCities]; // Move initialization here
+                dpMemo = new List[numCities][numCities];
+                totalCost = 0;
+                start = comboBox.getValue();
+                end = comboBox2.getValue();
 
 
-            for (int i = 0; i < numCities; i++) {
-                for (int j = 0; j < numCities; j++) {
-                    if (i == j) {
-                        minCostMatrix[i][j] = 0;
-                    } else if (adjMatrix[i][j] != null) {
-                        minCostMatrix[i][j] = adjMatrix[i][j].getCost();
-                        prevCityMatrix[i][j] = i; // Initialize previous city to the source
-                    } else {
-                        minCostMatrix[i][j] = Integer.MAX_VALUE;
-                    }
-                }
-            }
-
-            for (int k = 0; k < numCities; k++) {
                 for (int i = 0; i < numCities; i++) {
                     for (int j = 0; j < numCities; j++) {
-                        if (minCostMatrix[i][k] != Integer.MAX_VALUE && minCostMatrix[k][j] != Integer.MAX_VALUE) {
-                            int newCost = minCostMatrix[i][k] + minCostMatrix[k][j];
-                            if (newCost < minCostMatrix[i][j]) {
-                                minCostMatrix[i][j] = newCost;
-                                prevCityMatrix[i][j] = prevCityMatrix[k][j];
+                        if (i == j) {
+                            minCostMatrix[i][j] = 0;
+                        } else if (adjMatrix[i][j] != null) {
+                            minCostMatrix[i][j] = adjMatrix[i][j].getCost();
+                            prevCityMatrix[i][j] = i; // Initialize previous city to the source
+                        } else {
+                            minCostMatrix[i][j] = Integer.MAX_VALUE;
+                        }
+                    }
+                }
+
+                for (int k = 0; k < numCities; k++) {
+                    for (int i = 0; i < numCities; i++) {
+                        for (int j = 0; j < numCities; j++) {
+                            if (minCostMatrix[i][k] != Integer.MAX_VALUE && minCostMatrix[k][j] != Integer.MAX_VALUE) {
+                                int newCost = minCostMatrix[i][k] + minCostMatrix[k][j];
+                                if (newCost < minCostMatrix[i][j]) {
+                                    minCostMatrix[i][j] = newCost;
+                                    prevCityMatrix[i][j] = prevCityMatrix[k][j];
+                                }
                             }
                         }
                     }
                 }
-            }
-            if(start.equals("Select City") || end.equals("Select City")){
-                Expected.setText("Please Select City");
-                diffrent.setText("Please Select City");
-                all.setText("Please Select City");
-            }else {
-                printTheExpectedOutput();
-                findDifferentPath(start, end);
-                List<PathCost>  f =  findAllPathsDP(start, end);
-                all.setText("ALL PATHS from "+start +" to "+end+": "+"\n");
-                Collections.sort(f, Comparator.comparingInt(pathCost -> pathCost.cost));
-                for(int i =0 ; i<f.size() ;i++){
-                    System.out.println((i+1)+"."+f.get(i).path + " -> " + f.get(i).cost);
-                    all.appendText((i+1)+"."+f.get(i).path + " -> " + f.get(i).cost+"\n");
+                if (comboBox.getValue() == null|| comboBox2.getValue() == null) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Error");
+                    alert.setContentText("Please Select City");
+                    alert.showAndWait();
+                    return;
                 }
+
+
+                if (start.equals("Select City") || end.equals("Select City")) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Error");
+                    alert.setContentText("Please Select City");
+                    alert.showAndWait();
+                    return;
+                } else {
+                    printTheExpectedOutput();
+                    findDifferentPath(start, end);
+                    List<PathCost> f = findAllPathsDP(start, end);
+                    all.setText("ALL PATHS from " + start + " to " + end + ": " + "\n");
+                    Collections.sort(f, Comparator.comparingInt(pathCost -> pathCost.cost));
+                    for (int i = 0; i < f.size(); i++) {
+                        System.out.println((i + 1) + "." + f.get(i).path + " -> " + f.get(i).cost);
+                        all.appendText((i + 1) + "." + f.get(i).path + " -> " + f.get(i).cost + "\n");
+                    }
+                }
+
+            }catch (Exception ex){
+                ex.getMessage();
             }
-
-
         });
         fxmlLoader.getChildren().addAll(imageView,label,label2,label3,Expected,diffrent,all,showTable,lood,find,comboBox,comboBox2,TABLE);
         stage.setTitle("Hello!");
@@ -661,12 +675,21 @@ public class HelloApplication extends Application {
         stage.show();
     }
     private static void printDPTable(int[][] dp, String[] cityNames) {
+        if(cityNames == null){
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Error");
+            alert.setContentText("No Data Found");
+            alert.showAndWait();
+            return;
+        }
+
         int cellWidth = 8; // Adjust the cell width as needed
 
         StringBuilder output = new StringBuilder();
 
-        output.append("\t\t\t\t\tTable View\n");
-        output.append("--------------------------------------------------------------\n");
+        output.append("\t\t\t\t\tDp Table\n");
+        output.append("-------------------------------------------------------------------------------------------------------------\n");
 
         output.append(String.format("%-8s", ""));
         for (int i = 1; i < cityNames.length - 1; i++) {
@@ -674,7 +697,7 @@ public class HelloApplication extends Application {
         }
         output.append(cityNames[cityNames.length - 1]).append("\n");
 
-        output.append("--------------------------------------------------------------\n");
+        output.append("-------------------------------------------------------------------------------------------------------------\n");
 
         for (int i = 0; i < dp.length - 1; i++) {
             output.append(String.format("%-8s", cityNames[i]));
